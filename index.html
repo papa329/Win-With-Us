@@ -463,6 +463,15 @@
             align-items: center;
             gap: 8px;
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .payment-method:hover, .payment-method.active {
+            border-color: #3498db;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         /* Modal */
@@ -477,15 +486,19 @@
             z-index: 1100;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
         }
         
         .modal-content {
             background-color: white;
             padding: 30px;
             border-radius: 10px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .close-modal {
@@ -495,6 +508,50 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: #7f8c8d;
+        }
+        
+        /* Payment Forms */
+        .payment-form {
+            display: none;
+        }
+        
+        .payment-form.active {
+            display: block;
+        }
+        
+        /* MonaCash Specific Styles */
+        .moncash-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ff793f;
+        }
+        
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .qr-code img {
+            max-width: 200px;
+            margin-bottom: 15px;
+        }
+        
+        .moncash-steps {
+            margin: 20px 0;
+        }
+        
+        .moncash-steps ol {
+            padding-left: 20px;
+        }
+        
+        .moncash-steps li {
+            margin-bottom: 10px;
         }
         
         /* Responsive */
@@ -534,6 +591,10 @@
             
             .section-title h2 {
                 font-size: 2rem;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
             }
         }
     </style>
@@ -788,40 +849,106 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2>Finaliser votre achat</h2>
-            <p id="productName"></p>
+            <p id="productName" class="product-name"></p>
+            
             <div class="payment-methods">
-                <div class="payment-method">
-                    <i class="fab fa-paypal"></i>
-                    <span>PayPal</span>
-                </div>
-                <div class="payment-method">
+                <div class="payment-method" onclick="selectPayment('card')">
                     <i class="fas fa-credit-card"></i>
                     <span>Carte de crédit</span>
                 </div>
-                <div class="payment-method">
+                <div class="payment-method" onclick="selectPayment('paypal')">
+                    <i class="fab fa-paypal"></i>
+                    <span>PayPal</span>
+                </div>
+                <div class="payment-method" onclick="selectPayment('moncash')">
                     <i class="fas fa-mobile-alt"></i>
                     <span>MonaCash</span>
                 </div>
-                <div class="payment-method">
+                <div class="payment-method" onclick="selectPayment('stripe')">
                     <i class="fab fa-stripe"></i>
                     <span>Stripe</span>
                 </div>
             </div>
-            <form>
-                <div class="form-group">
-                    <label for="cardNumber">Numéro de carte</label>
-                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+            
+            <!-- Carte de crédit Form -->
+            <div id="cardForm" class="payment-form">
+                <form>
+                    <div class="form-group">
+                        <label for="cardNumber">Numéro de carte</label>
+                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryDate">Date d'expiration</label>
+                        <input type="text" id="expiryDate" placeholder="MM/AA">
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="text" id="cvv" placeholder="123">
+                    </div>
+                    <button type="submit" class="btn">Payer maintenant</button>
+                </form>
+            </div>
+            
+            <!-- PayPal Form -->
+            <div id="paypalForm" class="payment-form">
+                <div style="text-align: center; margin: 20px 0;">
+                    <p>Vous serez redirigé vers PayPal pour compléter votre paiement.</p>
+                    <button class="btn" style="background-color: #0070ba;">Payer avec PayPal</button>
                 </div>
-                <div class="form-group">
-                    <label for="expiryDate">Date d'expiration</label>
-                    <input type="text" id="expiryDate" placeholder="MM/AA">
+            </div>
+            
+            <!-- MonaCash Form -->
+            <div id="moncashForm" class="payment-form">
+                <div class="moncash-info">
+                    <p><strong>Paiement via MonaCash</strong></p>
+                    <p>Scannez le code QR ci-dessous avec l'application MonaCash pour effectuer votre paiement.</p>
                 </div>
-                <div class="form-group">
-                    <label for="cvv">CVV</label>
-                    <input type="text" id="cvv" placeholder="123">
+                
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://winwithus.com/payment/moncash/order12345" alt="QR Code MonaCash">
+                    <p>Scannez ce code QR avec l'application MonaCash</p>
                 </div>
-                <button type="submit" class="btn">Payer maintenant</button>
-            </form>
+                
+                <div class="moncash-steps">
+                    <p><strong>Instructions de paiement:</strong></p>
+                    <ol>
+                        <li>Ouvrez l'application MonaCash sur votre téléphone</li>
+                        <li>Appuyez sur l'option "Payer"</li>
+                        <li>Sélectionnez "Scanner un code QR"</li>
+                        <li>Scannez le code QR ci-dessus</li>
+                        <li>Confirmez le montant et validez le paiement</li>
+                    </ol>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <p>Vous n'avez pas MonaCash? <a href="https://moncash.com" target="_blank">Téléchargez l'application ici</a></p>
+                </div>
+            </div>
+            
+            <!-- Stripe Form -->
+            <div id="stripeForm" class="payment-form">
+                <form>
+                    <div class="form-group">
+                        <label for="stripeEmail">Email</label>
+                        <input type="email" id="stripeEmail" placeholder="votre@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="stripeCard">Numéro de carte</label>
+                        <input type="text" id="stripeCard" placeholder="1234 5678 9012 3456">
+                    </div>
+                    <div class="form-group" style="display: flex; gap: 15px;">
+                        <div style="flex: 1;">
+                            <label for="stripeExpiry">Date d'expiration</label>
+                            <input type="text" id="stripeExpiry" placeholder="MM/AA">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="stripeCvc">CVC</label>
+                            <input type="text" id="stripeCvc" placeholder="123">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Payer avec Stripe</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -865,11 +992,45 @@
                 productName.textContent = 'Networking efficace - 17,99 €';
             }
             
+            // Reset payment method selection
+            selectPayment('card');
+            
             modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
         
         function closeModal() {
             document.getElementById('paymentModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Select payment method
+        function selectPayment(method) {
+            // Remove active class from all payment methods
+            document.querySelectorAll('.payment-method').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to selected payment method
+            document.querySelector(`.payment-method:nth-child(${getPaymentIndex(method)})`).classList.add('active');
+            
+            // Hide all payment forms
+            document.querySelectorAll('.payment-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Show selected payment form
+            document.getElementById(`${method}Form`).classList.add('active');
+        }
+        
+        function getPaymentIndex(method) {
+            switch(method) {
+                case 'card': return 1;
+                case 'paypal': return 2;
+                case 'moncash': return 3;
+                case 'stripe': return 4;
+                default: return 1;
+            }
         }
         
         // Close modal when clicking outside
@@ -889,6 +1050,13 @@
                 header.style.boxShadow = 'none';
             }
         });
+        
+        // Initialize payment method to card
+        document.addEventListener('DOMContentLoaded', function() {
+            selectPayment('card');
+        });
     </script>
 </body>
 </html>
+        
+        
